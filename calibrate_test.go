@@ -310,7 +310,9 @@ func logCommon(t *testing.T, what, dir string, paths []string) {
 			list = append(list, common{tie, len(by)})
 		}
 	}
-	sort.Slice(list, func(i, j int) bool { return list[i].n > list[j].n || list[i].n == list[j].n && list[i].tie < list[j].tie })
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].n > list[j].n || list[i].n == list[j].n && list[i].tie < list[j].tie
+	})
 	for _, c := range list[:min(len(list), 80)] {
 		t.Logf("%s, in %d of them: %s", what, c.n, c.tie)
 	}
