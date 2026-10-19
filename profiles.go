@@ -64,7 +64,7 @@ func init() {
 		marks = append(marks, &mark{
 			key: family, name: p.name + " profile", level: names,
 			hints:  []string{p.hint},
-			re:     regexp.MustCompile(p.re),
+			re:     regexp.MustCompile(hostStart + "(?:" + p.re + ")"),
 			read:   account(family, reserved),
 			lookup: "It is a link to a profile, which says whose it is to anybody who follows it.",
 			advice: adviceProfile,

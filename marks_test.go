@@ -213,3 +213,12 @@ func TestAnIDKeepsItsShape(t *testing.T) {
 		t.Errorf("a long token came out as %s", got)
 	}
 }
+
+// A host is that host only when it starts the address: GitHub's own
+// documentation is not an account called en, and Dropbox is not x.com.
+func TestAHostInsideAnotherIsNotIt(t *testing.T) {
+	c := check(t, project(t, map[string]string{
+		"README.md": "See https://docs.github.com/en/pages and https://www.dropbox.com/s/abc123/file.zip and https://developers.facebook.com/docs/sharing",
+	}))
+	c.only(t)
+}

@@ -218,6 +218,7 @@ func calibrateApps(t *testing.T, dir string) {
 			shared++
 		}
 	}
+	logCommon(t, "apps", dir, files)
 	t.Logf("apps: %d of %d with a certificate read; %d name somebody, %d of them with a city; %d signed with a debug key; %d with nothing in the name", read, len(files), person, city, debug, empty)
 	t.Logf("keys that sign apps under more than one GitHub account: %d", shared)
 	logCounts(t, "apps carrying each kind", byMark)
@@ -244,6 +245,11 @@ func calibrateWeb(t *testing.T, dir string) {
 		}
 	}
 	t.Logf("most visited sites: %d read", len(entries))
+	var paths []string
+	for _, e := range entries {
+		paths = append(paths, filepath.Join(dir, e.Name()))
+	}
+	logCommon(t, "most visited sites", dir, paths)
 	logCounts(t, "sites carrying each kind", byMark)
 	families := map[string]int{}
 	for tie, on := range seenOn {
@@ -272,4 +278,40 @@ func logCounts(t *testing.T, title string, counts map[string]int) {
 		parts = append(parts, fmt.Sprintf("%s %d", k, counts[k]))
 	}
 	t.Logf("%s: %s", title, strings.Join(parts, ", "))
+}
+
+// logCommon prints what turns up in many unrelated projects, which is a
+// library's or a vendor's and not anybody's, so it can be told apart. These
+// are not one person's, by the way they were found, and are printed as
+// they are.
+func logCommon(t *testing.T, what, dir string, paths []string) {
+	seen := map[string]map[string]bool{}
+	for _, p := range paths {
+		owner := strings.SplitN(filepath.Base(p), "__", 2)[0]
+		for _, sg := range scanned(t, p).sightings() {
+			if sg.found.level != names && sg.found.level != ties {
+				continue
+			}
+			for _, tie := range sg.found.ties {
+				if seen[tie] == nil {
+					seen[tie] = map[string]bool{}
+				}
+				seen[tie][owner] = true
+			}
+		}
+	}
+	type common struct {
+		tie string
+		n   int
+	}
+	var list []common
+	for tie, by := range seen {
+		if len(by) >= 3 {
+			list = append(list, common{tie, len(by)})
+		}
+	}
+	sort.Slice(list, func(i, j int) bool { return list[i].n > list[j].n || list[i].n == list[j].n && list[i].tie < list[j].tie })
+	for _, c := range list[:min(len(list), 80)] {
+		t.Logf("%s, in %d of them: %s", what, c.n, c.tie)
+	}
 }

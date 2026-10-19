@@ -145,7 +145,13 @@ var githubReserved = map[string]bool{
 	"readme": true, "search": true, "security": true, "settings": true, "site": true,
 	"sponsors": true, "topics": true, "trending": true, "users": true, "codespaces": true,
 	"copilot": true, "solutions": true, "team": true, "account": true, "dashboard": true, "advisories": true,
+	"user-attachments": true, "repos": true, "assets": true, "raw": true,
 }
+
+// hostStart is what may come before a host for it to be that host and not
+// the end of another: "docs.github.com/en" is GitHub's documentation and
+// not an account called en, and "dropbox.com/s/" is not x.com.
+const hostStart = `(?:^|[^A-Za-z0-9.-])(?:www\.|m\.|mobile\.|[a-z]{2}\.)?`
 
 // Paths after a donation site's address that are its own pages.
 var siteReserved = map[string]bool{
@@ -173,6 +179,12 @@ var commonAccounts = map[string]bool{
 	"github:withastro": true, "github:tailwindlabs": true, "github:alpinejs": true, "github:reactjs": true,
 	"github:angular": true, "github:jgthms": true, "github:chartjs": true, "github:d3": true,
 	"github:leaflet": true, "github:mapbox": true, "github:cdnjs": true, "github:jsdelivr": true,
+	// From the calibration, linked from four or more of a thousand
+	// personal sites each: icon fonts, themes and templates loaded from
+	// their authors' repositories.
+	"github:jpswalsh": true, "github:cotes2020": true, "github:just-the-docs": true, "github:feathericons": true,
+	"github:nerfies": true, "github:webplatform": true, "github:giscus": true, "github:jdecked": true,
+	"github:devicons": true, "github:krisk": true, "github:stylishthemes": true, "github:bogoli": true,
 }
 
 func account(family string, reserved map[string]bool) func(m []string) (found, bool) {
@@ -593,7 +605,7 @@ var marks = []*mark{
 	{
 		key: "github-link", name: "GitHub account", level: names,
 		hints:  []string{"github.com/"},
-		re:     regexp.MustCompile(`\bgithub\.com/(?:sponsors/)?([A-Za-z0-9][A-Za-z0-9-]{0,38})\b`),
+		re:     regexp.MustCompile(hostStart + `github\.com/(?:sponsors/)?([A-Za-z0-9][A-Za-z0-9-]{0,38})\b`),
 		read:   account("github", githubReserved),
 		only:   markupOnly,
 		lookup: "The account is in the address, and every repository, star and commit of it is a click away.",
