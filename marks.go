@@ -198,7 +198,7 @@ var siteReserved = map[string]bool{
 
 // commonAccounts are linked from so many unrelated projects that a link
 // to one says which theme or library a site uses, not whose it is. In the
-// first forty personal sites tried, a third of the GitHub accounts found
+// first forty personal sites tried, over a quarter of the GitHub accounts found
 // were these: the theme's author in the footer, the library's in a
 // credit. Two sites on the same theme are not one person's.
 var commonAccounts = map[string]bool{
@@ -232,8 +232,10 @@ func account(family string, reserved map[string]bool) func(m []string) (found, b
 		// The address it was found in, where that reads as one, so the
 		// report says ko-fi.com/name and not just the name.
 		shown := v
-		if !strings.ContainsAny(m[0], "\"'<> \t\n") && len(m[0]) <= 80 {
-			shown = strings.TrimPrefix(strings.TrimPrefix(m[0], "https://"), "http://")
+		// The pattern takes the character before the host with it, to be
+		// sure the host starts there; it is not part of the address.
+		if at := strings.TrimLeft(m[0], "/\"'(=:"); !strings.ContainsAny(at, "\"'<> \t\n") && len(at) <= 80 {
+			shown = strings.TrimPrefix(strings.TrimPrefix(at, "https://"), "http://")
 		}
 		return found{value: shown, who: v, ties: []string{family + ":" + l}, level: names}, true
 	}

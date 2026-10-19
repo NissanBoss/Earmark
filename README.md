@@ -52,8 +52,9 @@ purpose:
 
 - **A Mapbox token has your user name in it.** It is base64 of a line of
   JSON, `{"u":"your-name",...}`, in every map you publish. Of 260 public
-  Mapbox tokens on GitHub, the name inside was exactly the repository
-  owner's in 60, and another name of somebody's in nearly all the rest.
+  Mapbox tokens read from public code on GitHub, the name inside was
+  exactly the repository owner's in 60, and somebody else's user name in
+  the rest.
 - **An AdSense number is you.** Google allows one AdSense account to a
   person, it has to be on the page for the ads to work, and SpyOnWeb,
   SameID and BuiltWith will give anybody every other site that carries it,
@@ -63,8 +64,8 @@ purpose:
 - **An Android app carries whatever was typed into keytool.** The
   certificate it is signed with has the name the key was made with, and
   the same key signs every app the developer makes for as long as they
-  make it. Of 200 apps their developers publish on GitHub, 177 carry a
-  name, a person's or an organisation's, and 84 a city as well.
+  make it. Of 200 apps their developers publish on GitHub, 178 carry a
+  name, a person's or an organisation's, and 89 a city as well.
 - **A deployment address ends with its account.** A Vercel preview is
   project-hash-*scope*.vercel.app, where the scope is the account or team
   it was deployed from. A Cloudflare Worker is
@@ -75,7 +76,7 @@ purpose:
   person is their legal name, and the hardware IDs of every device it may
   run on.
 - **A copied site brings its author along.** In the calibration below, the
-  same AdSense number turned up on eleven personal sites of different
+  same AdSense number turned up on seventeen personal sites of different
   people, most likely copies of one site: a copy goes on carrying its
   author's ads, and its author's name with them.
 
@@ -158,10 +159,10 @@ Placeholders are left alone (`UA-XXXXX-Y`, `ca-pub-0000000000000000`), and
 so are the accounts documentation uses, Mapbox's examples among them.
 Libraries fetched by a package manager are not read, `node_modules` and
 `Pods`, because every identifier in them is their authors'. A link to a
-theme's author or a library's, which the calibration found on a third of
-personal sites, is left out by name, and inside a binary or a licence file
-no link to an account is counted at all: in two hundred apps, those were
-the libraries'.
+theme's author or a library's, each of which the calibration found on four or
+more personal sites, is left out by name, and inside an app, a binary or a
+licence file no link to an account is counted at all: in two hundred apps,
+those were the libraries'.
 
 The exit code is 1 when something names an account, is listed, or is
 shared with the other project, 0 when nothing did, 2 when the files could
@@ -187,11 +188,64 @@ answer.
 ([`calibrate.yml`](.github/workflows/calibrate.yml)), downloaded and
 counted on GitHub's machines. The last run, 19 October 2026:
 
-CALIBRATION
+- **1,214 personal sites on GitHub Pages**, the user site of each owner.
+  964 carry something that names an account. Of the GitHub accounts in
+  them, 1,341 were the site's owner and 1,139 somebody else's, the
+  projects and people a site links to. After GitHub, the commonest were an
+  email address on 218, a Google Analytics measurement ID on 149, LinkedIn
+  on 148, X on 129, Discord invites on 98 and AdSense on 48.
+- **Two sites of one person.** 134 of the owners have a second site, a
+  project page. 55 of the pairs are tied, and 15 by something besides the
+  GitHub account they are both served from: a profile, an address, an
+  analytics site, a Workers subdomain.
+- **Two sites of different people.** Of 1,214 pairs of neighbours in the
+  list, 15 are tied. Nine of them by one AdSense number, on seventeen
+  sites of different people, most likely copies of one site; the rest by a
+  third account both link to, an invite to the same Discord server, the
+  same address.
+- **1,204 of the 2,000 most visited sites**, by the
+  [Tranco](https://tranco-list.eu) list; the rest refused a plain request.
+  Tag Manager is on 431, a Google Analytics measurement ID on 180, the old
+  Analytics on 84, a Google API key on 53, Sentry on 51, AdSense on 48, the
+  Meta Pixel on 32, a Mapbox token on 4. And on more than one of these
+  domains at once: 26 Tag Manager containers, 7 AdSense publishers, 4
+  Analytics accounts and 151 social profiles, the same companies under
+  other names.
+- **200 Android apps** their developers publish in GitHub releases. Every
+  certificate was read: 178 name a person or an organisation, 89 with a
+  city as well; 14 are signed with the debug key of the machine that built
+  them; 9 carry nothing true. Besides the signing, a Google API key is in
+  30, a Google Cloud project number in 20, a Firebase project in 18, a
+  Workers subdomain in 13 and a Vercel deployment in 13.
+- **300 Mapbox tokens in public code** on GitHub, found through its code
+  search: 260 read as tokens, and the user name inside was exactly the
+  repository owner's in 60 of them.
 
 What the calibration taught, all of it in the code:
 
-LESSONS
+- A github.com link in a minified bundle is a library's: bundles carry them
+  in their error messages and their licences. In scripts, only the
+  addresses that load something count, raw.githubusercontent.com and
+  jsDelivr's; an address on github.io in a script is a library's
+  documentation, normalize.css's and slick's in every copy.
+- A host is that host only when it starts the address. docs.github.com/en
+  is not an account called en, and dropbox.com/s/ is not x.com.
+- Themes and icon fonts load from their authors' accounts: Academicons,
+  Chirpy, Just the Docs, Feather, the Nerfies template, each on four or
+  more of the personal sites. They are left out by name.
+- Inside an app, the accounts it links to are its libraries': JetBrains in
+  31 of the 200 apps, Kotlin in 30, and AboutLibraries, which makes the
+  credits screen, put its author in 29.
+- Sites print the visitor's user agent into the page. The first run's
+  agent had this repository's address in it, and came back from twenty of
+  the most visited sites as a GitHub account.
+- A key made with nothing true in its name is how it should be done.
+  Termux signs with "APK Signer" from "Earth", and it is reported as a key
+  and nothing more.
+- A vendor's Google Cloud project number is on fourteen of the most
+  visited sites, which are not one company's, and is left out.
+- facebook.com/sharer.php is not a profile, and neither is
+  instagram.com/embed.js.
 
 ## What it cannot do
 
@@ -205,8 +259,8 @@ LESSONS
   transparency logs publish with every name on them, the address the
   server answers from, the headers it sends.
 - **It does not know which accounts are yours.** A link to a friend's
-  GitHub is reported like a link to your own; on personal sites, half the
-  GitHub accounts found were somebody else's. With `--against`, only what
+  GitHub is reported like a link to your own; on personal sites, nearly
+  half the GitHub accounts found were somebody else's. With `--against`, only what
   is in both counts, which is the question that matters.
 - **It does not read how you write, code or work.** Style, vocabulary and
   the hours you commit tie projects together too; Tell, Accent and Alibi
