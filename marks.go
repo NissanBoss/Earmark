@@ -42,7 +42,12 @@ type mark struct {
 	// only limits a mark to some files. A github.com link in a minified
 	// bundle is nearly always a library's own; in an HTML page or a
 	// README it is somebody's.
-	only   func(name string) bool
+	only func(name string) bool
+	// links is set for an account that a project links to, a profile or
+	// a repository, rather than one it runs on. Inside a binary and in
+	// the licence files an app carries, those are the libraries'
+	// authors: in two hundred apps, eclipse-ee4j was in fifty four.
+	links  bool
 	lookup string
 	advice string
 }
@@ -148,6 +153,36 @@ var githubReserved = map[string]bool{
 	"user-attachments": true, "repos": true, "assets": true, "raw": true,
 }
 
+// fileName is a path that ended up where a handle goes:
+// facebook.com/sharer.php, instagram.com/embed.js.
+func fileName(v string) bool {
+	for _, ext := range []string{".php", ".js", ".html", ".htm", ".css", ".aspx", ".jsp", ".png", ".jpg", ".svg", ".json", ".xml"} {
+		if strings.HasSuffix(v, ext) {
+			return true
+		}
+	}
+	return false
+}
+
+// commonTies are identifiers of a vendor's, on many unrelated sites at
+// once, found in the calibration.
+var commonTies = map[string]bool{
+	// A Google Cloud project number on fourteen of the most visited
+	// sites, which are not one company's.
+	"google-project:627897451255": true,
+}
+
+// notScripts keeps a mark out of scripts and style sheets, where an
+// address on github.io is a library's documentation more often than not:
+// normalize.css and slick name theirs in every copy.
+func notScripts(name string) bool {
+	switch strings.ToLower(filepathExt(name)) {
+	case ".js", ".mjs", ".cjs", ".css", ".map", ".ts", ".tsx", ".jsx":
+		return false
+	}
+	return true
+}
+
 // hostStart is what may come before a host for it to be that host and not
 // the end of another: "docs.github.com/en" is GitHub's documentation and
 // not an account called en, and "dropbox.com/s/" is not x.com.
@@ -191,7 +226,7 @@ func account(family string, reserved map[string]bool) func(m []string) (found, b
 	return func(m []string) (found, bool) {
 		v := firstGroup(m)
 		l := strings.ToLower(v)
-		if v == "" || placeholder(v) || docsAccounts[l] || reserved[l] || commonAccounts[family+":"+l] {
+		if v == "" || placeholder(v) || docsAccounts[l] || reserved[l] || commonAccounts[family+":"+l] || fileName(l) {
 			return found{}, false
 		}
 		// The address it was found in, where that reads as one, so the
@@ -594,16 +629,24 @@ var marks = []*mark{
 		advice: adviceAddress,
 	},
 	{
-		key: "github", name: "GitHub account", level: names,
-		hints: []string{"github.io", "githubusercontent.com", "jsdelivr.net/gh/", "githack.com"},
-		re: regexp.MustCompile(`\b([a-z0-9][a-z0-9-]{0,38})\.github\.io\b` +
-			`|(?:raw\.githubusercontent\.com|gist\.githubusercontent\.com|cdn\.jsdelivr\.net/gh|raw\.githack\.com|rawcdn\.githack\.com)/([A-Za-z0-9][A-Za-z0-9-]{0,38})/`),
+		key: "github", name: "GitHub account", level: names, links: true,
+		hints:  []string{"githubusercontent.com", "jsdelivr.net/gh/", "githack.com"},
+		re:     regexp.MustCompile(`(?:raw\.githubusercontent\.com|gist\.githubusercontent\.com|cdn\.jsdelivr\.net/gh|raw\.githack\.com|rawcdn\.githack\.com)/([A-Za-z0-9][A-Za-z0-9-]{0,38})/`),
 		read:   account("github", githubReserved),
 		lookup: "The account is in the address, and every repository, star and commit of it is a click away.",
 		advice: adviceAddress,
 	},
 	{
-		key: "github-link", name: "GitHub account", level: names,
+		key: "github-pages", name: "GitHub account", level: names, links: true,
+		hints:  []string{"github.io"},
+		re:     regexp.MustCompile(`\b([a-z0-9][a-z0-9-]{0,38})\.github\.io\b`),
+		read:   account("github", githubReserved),
+		only:   notScripts,
+		lookup: "The account is in the address, and every repository, star and commit of it is a click away.",
+		advice: adviceAddress,
+	},
+	{
+		key: "github-link", name: "GitHub account", level: names, links: true,
 		hints:  []string{"github.com/"},
 		re:     regexp.MustCompile(hostStart + `github\.com/(?:sponsors/)?([A-Za-z0-9][A-Za-z0-9-]{0,38})\b`),
 		read:   account("github", githubReserved),
@@ -612,7 +655,7 @@ var marks = []*mark{
 		advice: adviceAddress,
 	},
 	{
-		key: "gitlab", name: "GitLab account", level: names,
+		key: "gitlab", name: "GitLab account", level: names, links: true,
 		hints:  []string{"gitlab.io"},
 		re:     regexp.MustCompile(`\b([a-z0-9][a-z0-9-]{0,38})\.gitlab\.io\b`),
 		read:   account("gitlab", nil),
@@ -682,7 +725,7 @@ var marks = []*mark{
 		advice: adviceAddress,
 	},
 	{
-		key: "registry", name: "container image account", level: names,
+		key: "registry", name: "container image account", level: names, links: true,
 		hints:  []string{"ghcr.io/", "docker.io/", "quay.io/", "registry.gitlab.com/"},
 		re:     regexp.MustCompile(`\b(?:ghcr\.io|docker\.io|quay\.io|registry\.gitlab\.com)/([a-z0-9][a-z0-9_.-]{0,38})/[a-z0-9][a-z0-9_.-]*`),
 		read:   account("registry", map[string]bool{"library": true}),
@@ -690,7 +733,7 @@ var marks = []*mark{
 		advice: adviceAddress,
 	},
 	{
-		key: "donation", name: "payment page", level: names,
+		key: "donation", name: "payment page", level: names, links: true,
 		hints:  []string{"paypal.me/", "ko-fi.com/", "buymeacoffee.com/", "patreon.com/", "liberapay.com/", "opencollective.com/"},
 		re:     regexp.MustCompile(`\b(?:paypal\.me|ko-fi\.com|buymeacoffee\.com|patreon\.com|liberapay\.com|opencollective\.com)/([A-Za-z0-9_.-]{2,40})`),
 		read:   account("donation", siteReserved),
@@ -729,7 +772,7 @@ var marks = []*mark{
 		advice: "A number is a person. Use a business account on a number of its own, or no link.",
 	},
 	{
-		key: "telegram", name: "Telegram account", level: names,
+		key: "telegram", name: "Telegram account", level: names, links: true,
 		hints:  []string{"t.me/"},
 		re:     regexp.MustCompile(`\bt\.me/([A-Za-z][A-Za-z0-9_]{4,31})\b`),
 		read:   account("telegram", siteReserved),
@@ -745,7 +788,7 @@ var marks = []*mark{
 		advice: "Invite people to a server made by an account that is the project's.",
 	},
 	{
-		key: "service", name: "support or booking page", level: names,
+		key: "service", name: "support or booking page", level: names, links: true,
 		hints: []string{"calendly.com/", "zendesk.com", "freshdesk.com", "typeform.com"},
 		re:    regexp.MustCompile(`\bcalendly\.com/([A-Za-z0-9_-]{3,60})|\b([a-z0-9][a-z0-9-]{1,60})\.(?:zendesk|freshdesk|typeform)\.com\b`),
 		read: account("service", map[string]bool{"form": true, "help": true, "support": true, "www": true, "api": true,

@@ -76,7 +76,7 @@ func calibrateSites(t *testing.T, dir string) {
 			if sg.found.level == names {
 				any = true
 			}
-			if sg.mark.key == "github" || sg.mark.key == "github-link" {
+			if sg.mark.key == "github" || sg.mark.key == "github-link" || sg.mark.key == "github-pages" {
 				if strings.EqualFold(sg.found.who, o) {
 					githubOwner++
 				} else {

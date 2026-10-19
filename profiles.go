@@ -24,7 +24,7 @@ var platforms = []platform{
 	{"LinkedIn company", "linkedin.com/company/", `linkedin\.com/company/([A-Za-z0-9_%-]{2,100})`, nil},
 	{"X", ".com/", `(?:twitter|x)\.com/(?:#!/)?([A-Za-z0-9_]{1,15})\b`, []string{"intent", "share", "home", "search", "hashtag", "i", "settings", "explore", "login", "signup", "privacy", "tos", "about", "jobs", "notifications", "messages", "compose", "widgets", "twitterapi", "x", "twitter", "en", "web"}},
 	{"Instagram", "instagram.com/", `instagram\.com/([A-Za-z0-9_.]{1,30})\b`, []string{"p", "explore", "accounts", "reel", "reels", "stories", "about", "developer", "legal", "direct", "tv", "instagram"}},
-	{"Facebook", "facebook.com/", `facebook\.com/([A-Za-z0-9.]{5,50})\b`, []string{"sharer", "share", "dialog", "plugins", "tr", "groups", "pages", "events", "login", "help", "privacy", "policies", "watch", "marketplace", "gaming", "profile", "photo", "story", "permalink", "facebook", "business", "legal"}},
+	{"Facebook", "facebook.com/", `facebook\.com/([A-Za-z0-9.]{5,50})\b`, []string{"sharer", "share", "dialog", "profile.php", "plugins", "tr", "groups", "pages", "events", "login", "help", "privacy", "policies", "watch", "marketplace", "gaming", "profile", "photo", "story", "permalink", "facebook", "business", "legal"}},
 	{"YouTube", "youtube.com/", `youtube\.com/(?:@|c/|user/|channel/)([A-Za-z0-9_.-]{2,60})`, nil},
 	{"TikTok", "tiktok.com/@", `tiktok\.com/@([A-Za-z0-9_.]{2,24})`, nil},
 	{"Medium", "medium.com", `medium\.com/@([A-Za-z0-9_.-]{1,40})|\b([a-z0-9-]{2,40})\.medium\.com\b`, []string{"www", "help", "policy", "blog", "cdn-images-1", "miro", "cdn"}},
@@ -62,7 +62,7 @@ func init() {
 		}
 		family := "profile:" + strings.ToLower(strings.ReplaceAll(p.name, " ", "-"))
 		marks = append(marks, &mark{
-			key: family, name: p.name + " profile", level: names,
+			key: family, name: p.name + " profile", level: names, links: true,
 			hints:  []string{p.hint},
 			re:     regexp.MustCompile(hostStart + "(?:" + p.re + ")"),
 			read:   account(family, reserved),
@@ -71,7 +71,7 @@ func init() {
 		})
 	}
 	marks = append(marks, &mark{
-		key: "config-handle", name: "handle in the configuration", level: names,
+		key: "config-handle", name: "handle in the configuration", level: names, links: true,
 		re: configHandle,
 		read: func(m []string) (found, bool) {
 			v := strings.TrimPrefix(m[2], "@")

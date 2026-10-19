@@ -60,11 +60,13 @@ func (s *side) sightings() []*sighting {
 // scanText looks for every mark in one file's text. where is how the file
 // is shown, name what it is called, which some marks care about. located
 // is false for the strings pulled out of a binary, where a line number
-// would be a line of that and nothing anybody could find.
-func scanText(s *side, where, name, text string, located bool) {
+// would be a line of that and nothing anybody could find. borrowed is
+// set for text that is other people's by its nature: the strings of a
+// binary, which has its libraries compiled in, and licence files.
+func scanText(s *side, where, name, text string, located, borrowed bool) {
 	var lines []int
 	for _, m := range marks {
-		if !m.applies(name) || !hinted(text, m.hints) {
+		if !m.applies(name) || !hinted(text, m.hints) || borrowed && (m.links || m.key == "email") {
 			continue
 		}
 		for _, idx := range m.re.FindAllStringSubmatchIndex(text, -1) {
@@ -75,7 +77,7 @@ func scanText(s *side, where, name, text string, located bool) {
 				}
 			}
 			f, ok := m.read(groups)
-			if !ok {
+			if !ok || common(f) {
 				continue
 			}
 			if !located {
@@ -88,6 +90,15 @@ func scanText(s *side, where, name, text string, located bool) {
 			s.add(m, f, where+", "+position(lines, idx[0]))
 		}
 	}
+}
+
+func common(f found) bool {
+	for _, t := range f.ties {
+		if commonTies[t] {
+			return true
+		}
+	}
+	return false
 }
 
 func hinted(text string, hints []string) bool {

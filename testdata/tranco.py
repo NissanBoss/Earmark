@@ -16,7 +16,9 @@ import urllib.parse
 import urllib.request
 import zipfile
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; earmark-calibration/1; +https://github.com/NissanBoss/Earmark)"}
+# No address in it: sites that print the visitor's user agent into the
+# page put it on twenty of the first run's pages, as a GitHub account.
+UA = {"User-Agent": "Mozilla/5.0 (compatible; earmark-calibration/1)"}
 
 
 def get(url, limit):

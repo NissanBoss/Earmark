@@ -194,7 +194,7 @@ func (c *run) inspect(i int, where, name string, data []byte, depth int) {
 		}
 	case isText(data):
 		text := string(data)
-		scanText(s, where, name, text, true)
+		scanText(s, where, name, text, true, depth > 0 && licence(name))
 		scanPGP(s, where, text)
 	default:
 		// A binary keeps its strings as runs of text, and a token baked
@@ -204,8 +204,18 @@ func (c *run) inspect(i int, where, name string, data []byte, depth int) {
 			c.profile(s, where, data)
 			return
 		}
-		scanText(s, where+", in its strings", name, strs(data), false)
+		scanText(s, where+", in its strings", name, strs(data), false, true)
 	}
+}
+
+// licence is a file inside a package that is about its libraries: the
+// licences and notices, and the metadata a jar keeps under META-INF.
+func licence(name string) bool {
+	l := strings.ToLower(name)
+	base := l[strings.LastIndex(l, "/")+1:]
+	return strings.HasPrefix(l, "meta-inf/") || strings.Contains(l, "/meta-inf/") ||
+		strings.Contains(base, "license") || strings.Contains(base, "licence") || strings.Contains(base, "notice") ||
+		strings.Contains(l, "third_party") || strings.Contains(l, "third-party") || strings.Contains(l, "open_source_licenses")
 }
 
 func (c *run) report(compare bool) *Report {
