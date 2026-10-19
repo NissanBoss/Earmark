@@ -126,12 +126,15 @@ func (c *run) file(i int, path string) {
 		return
 	}
 	c.read[i]++
-	c.inspect(i, where, filepath.Base(path), data, 0)
+	c.inspect(i, where, filepath.Base(path), data, 0, false)
 }
 
 // inspect reads one file, or one file inside another. depth stops a zip
-// inside a jar inside an APK from going on for ever.
-func (c *run) inspect(i int, where, name string, data []byte, depth int) {
+// inside a jar inside an APK from going on for ever. inApp is set inside
+// an app's package, where the text files are its libraries' as often as
+// its own: the credits screen AboutLibraries makes lists every library's
+// repository, and put mikepenz in twenty nine apps of two hundred.
+func (c *run) inspect(i int, where, name string, data []byte, depth int, inApp bool) {
 	s := c.sides[i]
 	lower := strings.ToLower(name)
 	if depth > 0 {
@@ -152,6 +155,7 @@ func (c *run) inspect(i int, where, name string, data []byte, depth int) {
 			c.gap(where, "looks like a zip and could not be opened as one")
 			return
 		}
+		inApp = inApp || appPackage(lower, entries)
 		c.containers[i]++
 		for _, g := range gaps {
 			c.gap(where, g)
@@ -173,7 +177,7 @@ func (c *run) inspect(i int, where, name string, data []byte, depth int) {
 				}
 				continue
 			}
-			c.inspect(i, inner, e.name, e.data, depth+1)
+			c.inspect(i, inner, e.name, e.data, depth+1, inApp)
 		}
 	case bytes.HasPrefix(data, []byte{0x1f, 0x8b}), looksTar(data):
 		if depth >= 3 {
@@ -190,11 +194,11 @@ func (c *run) inspect(i int, where, name string, data []byte, depth int) {
 			c.gap(where, g)
 		}
 		for _, e := range entries {
-			c.inspect(i, where+" > "+e.name, e.name, e.data, depth+1)
+			c.inspect(i, where+" > "+e.name, e.name, e.data, depth+1, inApp)
 		}
 	case isText(data):
 		text := string(data)
-		scanText(s, where, name, text, true, depth > 0 && licence(name))
+		scanText(s, where, name, text, true, inApp || depth > 0 && licence(name))
 		scanPGP(s, where, text)
 	default:
 		// A binary keeps its strings as runs of text, and a token baked
@@ -206,6 +210,22 @@ func (c *run) inspect(i int, where, name string, data []byte, depth int) {
 		}
 		scanText(s, where+", in its strings", name, strs(data), false, true)
 	}
+}
+
+// appPackage says whether a zip is an app: by its name, or by what an
+// Android or iOS package always has inside.
+func appPackage(name string, entries []entry) bool {
+	for _, ext := range []string{".apk", ".aab", ".ipa", ".jar", ".aar", ".xapk", ".apks"} {
+		if strings.HasSuffix(name, ext) {
+			return true
+		}
+	}
+	for _, e := range entries {
+		if e.name == "AndroidManifest.xml" || e.name == "classes.dex" || strings.HasPrefix(e.name, "Payload/") {
+			return true
+		}
+	}
+	return false
 }
 
 // licence is a file inside a package that is about its libraries: the
