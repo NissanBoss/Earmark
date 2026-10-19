@@ -42,12 +42,21 @@ var serviceWords = map[string]bool{
 	"count": true, "stripe": true, "team": true, "live": true, "test": true, "https": true, "http": true,
 }
 
+// labelWords are this program's own, put in front of what a certificate
+// or a profile says: "name", "city". The first release masked them along
+// with the rest, and a certificate came out as n**e and c*****y.
+var labelWords = map[string]bool{
+	"name": true, "organisation": true, "unit": true, "city": true, "region": true,
+	"country": true, "team": true, "certificate": true,
+}
+
 func maskRuns(s string, from int, inWord func(rune) bool) string {
 	var b strings.Builder
 	var word []rune
 	flush := func() {
 		if len(word) > 0 {
-			if len(word) >= from && !(from > 1 && serviceWords[strings.ToLower(string(word))]) {
+			lower := strings.ToLower(string(word))
+			if len(word) >= from && !(from > 1 && serviceWords[lower]) && !labelWords[lower] {
 				b.WriteString(maskWord(string(word)))
 			} else {
 				b.WriteString(string(word))

@@ -222,3 +222,11 @@ func TestAHostInsideAnotherIsNotIt(t *testing.T) {
 	}))
 	c.only(t)
 }
+
+// What a certificate says is masked, and the labels this puts in front of
+// it are not.
+func TestACertificateIsMaskedAndStillReads(t *testing.T) {
+	if got := (shower{}).text("name Ana Riverside, city Valencia, country ES"); got != "name A*a R*******e, city V******a, country E*" {
+		t.Errorf("came out as %q", got)
+	}
+}

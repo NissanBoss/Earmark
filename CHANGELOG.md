@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.1
+
+- **The labels in front of what a certificate says are not masked.** v1
+  masked them with the rest, and a signing certificate came out as
+  `n**e A*a R*******e, c*****y E*`; it now reads `name A*a R*******e,
+  country E*`, the name masked and the label not.
+
 ## v1
 
 The first release.
