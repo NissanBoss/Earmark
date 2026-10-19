@@ -1,0 +1,33 @@
+name: Made by tools
+
+# Projects made the way people make them: a site built by Vite with its
+# keys in the environment, a package made by npm pack, apps signed by
+# jarsigner, keys from ssh-keygen and gpg. Each must come out with what
+# testdata/tools.sh says is in it, and the keys with the fingerprints
+# their own tools give them.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Make the projects
+        run: sh testdata/tools.sh "$RUNNER_TEMP/tools"
+
+      - name: Check them
+        run: EARMARK_TOOLS="$RUNNER_TEMP/tools" go test -run TestMadeByTools -v .

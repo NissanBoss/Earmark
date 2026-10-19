@@ -1,0 +1,54 @@
+name: Calibration
+
+# A thousand personal sites on GitHub Pages, with a second site by the same
+# person for as many as have one; the most visited sites on the web, by the
+# Tranco list; and Android apps their developers publish on GitHub. Each
+# group is downloaded and counted in a job of its own. The README's numbers
+# come from here, and so does every rule that was changed because it fired
+# on what was not anybody's. Only counts are printed. By hand, and once a
+# month.
+
+on:
+  schedule:
+    - cron: "17 4 3 * *"
+  workflow_dispatch:
+    inputs:
+      sites:
+        description: "personal sites"
+        default: "1000"
+      web:
+        description: "most visited sites"
+        default: "2000"
+      apps:
+        description: "apps"
+        default: "200"
+
+jobs:
+  calibrate:
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [sites, web, apps]
+    name: calibrate ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "${{ matrix.group }}" in
+            sites) python3 testdata/sites.py "$RUNNER_TEMP/cal" "${{ github.event.inputs.sites || '1000' }}" ;;
+            web)   python3 testdata/tranco.py "$RUNNER_TEMP/cal" "${{ github.event.inputs.web || '2000' }}" ;;
+            apps)  python3 testdata/apks.py "$RUNNER_TEMP/cal" "${{ github.event.inputs.apps || '200' }}" ;;
+          esac
+          du -sh "$RUNNER_TEMP/cal"
+
+      - name: Count
+        run: EARMARK_CALIBRATION="$RUNNER_TEMP/cal" go test -run TestCalibration -v -timeout 100m .
